@@ -1,20 +1,24 @@
 mod handlers;
-mod api;
+mod routes;
 mod models;
 mod resources;
-mod schemas;
+mod schema;
 mod services;
 mod errors;
-mod auth;
-pub mod config;
+mod middleware;
+mod tests;
+
+extern crate serde;
+extern crate serde_json;
 
 extern crate diesel;
 use std::env;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
-use crate::api::urls::register_urls;
+use crate::routes::user_routes::user_routes;
 use crate::resources::db;
+use crate::routes::auth_routes::auth_routes;
 
 
 #[actix_web::main]
@@ -28,7 +32,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .app_data(
                 web::Data::new(pool.clone()))
-            .route("", web::get().to(register_urls()))
+            .service(user_routes())
+            .service(auth_routes())
+            // .route("", web::get().to(user_routes()))
     })
     .bind("127.0.0.1:8080")?
     .run()

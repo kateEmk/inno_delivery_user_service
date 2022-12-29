@@ -9,14 +9,14 @@ pub enum ServiceError {
     #[display(fmt = "BadRequest: {}", _0)]
     BadRequest(String),
 
-    #[display(fmt = "JWKSFetchError")]
-    JWKSFetchError,
-
     #[display(fmt = "Unauthorised")]
     Unauthorised,
 
     #[display(fmt = "DB not found")]
     DBNotFound,
+
+    #[display(fmt = "User not found")]
+    UserNotFound,
 }
 
 // impl ResponseError trait allows to convert our errors into http responses with appropriate data
@@ -27,11 +27,14 @@ impl ResponseError for ServiceError {
                 HttpResponse::InternalServerError().json("Internal Server Error, Please try later")
             }
             ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
-            ServiceError::JWKSFetchError => {
-                HttpResponse::InternalServerError().json("Could not fetch JWKS")
-            }
             ServiceError::Unauthorised => {
                 HttpResponse::Unauthorized().json("User is unauthorized")
+            }
+            ServiceError::DBNotFound => {
+                HttpResponse::NotFound().json("Database not found")
+            }
+            ServiceError::UserNotFound => {
+                HttpResponse::NotFound().json("User not found")
             }
         }
     }
