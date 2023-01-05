@@ -12,14 +12,11 @@ pub enum ServiceError {
     #[display(fmt = "Unauthorised")]
     Unauthorised,
 
-    #[display(fmt = "DB not found")]
-    DBNotFound,
-
     #[display(fmt = "User not found")]
     UserNotFound,
 }
 
-// impl ResponseError trait allows to convert our errors into http responses with appropriate data
+
 impl ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
         match self {
@@ -30,11 +27,24 @@ impl ResponseError for ServiceError {
             ServiceError::Unauthorised => {
                 HttpResponse::Unauthorized().json("User is unauthorized")
             }
-            ServiceError::DBNotFound => {
-                HttpResponse::NotFound().json("Database not found")
-            }
             ServiceError::UserNotFound => {
                 HttpResponse::NotFound().json("User not found")
+            }
+        }
+    }
+}
+
+#[derive(Debug, Display)]
+pub enum AuthError {
+    #[display(fmt = "Error during validating")]
+    ErrorValidating,
+}
+
+impl ResponseError for AuthError {
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            AuthError::ErrorValidating => {
+                HttpResponse::BadGateway().json("Error during validating (JWT Auth), Please try later")
             }
         }
     }

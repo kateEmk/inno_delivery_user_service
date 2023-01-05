@@ -9,11 +9,7 @@ services:
       - "./data/postgres:/var/lib/postgresql/data"
     env_file:
       - .env
-    healthcheck:
-      test: /usr/bin/pg_isready -U postgres
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
   web:
     build:
       context: .
@@ -22,8 +18,5 @@ services:
       - .:/app
     ports:
       - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
     env_file:
       - .env

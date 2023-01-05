@@ -1,13 +1,15 @@
 use actix_web::body::BoxBody;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use actix_web::http::header::ContentType;
+// use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use diesel::{Queryable, Insertable, AsChangeset};
+// use uuid::Uuid;
 use crate::schema::schema::*;
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 pub struct User {
-    pub id: i32,
+    // pub uuid: Uuid,
     pub first_name: String,
     pub address: String,
     pub phone_number: String,
@@ -16,8 +18,8 @@ pub struct User {
     pub role: String,       // USER / COURIER / ADMIN
     pub is_blocked: bool,
     pub is_deleted: bool,
-    pub created_at: String,
-    pub updated_at: String
+    // pub created_at: NaiveDateTime,
+    // pub updated_at: NaiveDateTime
 }
 
 pub enum Roles {
@@ -28,16 +30,15 @@ pub enum Roles {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 pub struct Courier {
-    pub id: i32,
-    pub user_id: i32,
+    // pub uuid: Uuid,
     pub is_free: bool,
-    pub rating: f32,
+    pub rating: f64,
 }
 
 #[derive(Insertable, Debug)]
 #[diesel(table_name = users)]
 pub struct Users {
-    pub id: i32,
+    // pub uuid: Uuid,
     pub first_name: String,
     pub address: String,
     pub phone_number: String,
@@ -46,29 +47,28 @@ pub struct Users {
     pub role: String,
     pub is_blocked: bool,
     pub is_deleted: bool,
-    pub created_at: String,
-    pub updated_at: String
+    // pub created_at: NaiveDateTime,
+    // pub updated_at: NaiveDateTime
 }
 
 #[derive(Insertable, Debug)]
-#[diesel(belongs_to(Users))]
+#[diesel(belongs_to(users))]
 #[diesel(table_name = courier)]
 pub struct Couriers {
-    pub id: i32,
-    pub user_id: i32,
+    // pub uuid: Uuid,
     pub is_free: bool,
-    pub rating: f32,
+    pub rating: f64,
 }
 
 #[derive(Insertable, Debug, Deserialize, Serialize)]
 #[diesel(table_name = users)]
 pub struct CreateNewUser {
-    pub id: i32,
     pub first_name: String,
     pub phone_number: String,
     pub email: String,
     pub password: String
 }
+
 
 #[derive(Insertable, Debug, Deserialize, Serialize)]
 #[diesel(table_name = users)]

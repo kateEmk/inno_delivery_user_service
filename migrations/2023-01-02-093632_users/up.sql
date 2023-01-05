@@ -8,33 +8,27 @@ CREATE TABLE IF NOT EXISTS users(
     role TEXT NOT NULL,
     is_blocked BOOL,
     is_deleted BOOL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS courier(
     id INTEGER NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     user_id INT NOT NULL,
+    is_free BOOL NOT NULL,
     rating INT NOT NULL
 );
 
-CREATE FUNCTION check_user_update()
-    RETURNS trigger AS
-    LANGUAGE PLPGSQL
-    AS
-    $$
-    BEGIN
-         NEW.first_name <> OLD.first_name THEN
-		 INSERT INTO users(user_id,first_name,updated_at)
-		 VALUES(OLD.id,OLD.first_name,now());
-	END IF;
-	    RETURN NEW;
 
-    END;
-    $$
-
+CREATE OR REPLACE FUNCTION check_user_update()
+    RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at := current_timestamp;
+    RETURN NEW;
+END;
+    $$ LANGUAGE PLPGSQL;
 
 CREATE TRIGGER check_update
-    BEFORE UPDATE ON users
+    AFTER UPDATE ON users
     FOR EACH ROW
-    EXECUTE FUNCTION check_user_update();
+EXECUTE FUNCTION check_user_update();

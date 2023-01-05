@@ -1,39 +1,32 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    addresses (id) {
-        id -> Int4,
-        user_id -> Int4,
-        address -> Text,
+    courier (uuid) {
+        is_free -> Bool,
+        rating -> Float8,
+        uuid -> Uuid,
     }
 }
 
 diesel::table! {
-    courier (id) {
-        id -> Int4,
-        user_id -> Int4,
-        rating -> Int4,
-    }
-}
-
-diesel::table! {
-    users (id) {
-        id -> Int4,
+    users (uuid) {
         first_name -> Text,
+        address -> Text,
         phone_number -> Text,
         email -> Text,
         password -> Text,
         role -> Text,
-        is_blocked -> Nullable<Bool>,
-        is_deleted -> Nullable<Bool>,
+        is_blocked -> Bool,
+        is_deleted -> Bool,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        uuid -> Uuid,
     }
 }
 
-diesel::joinable!(addresses -> users (user_id));
-diesel::joinable!(courier -> users (id));
+diesel::joinable!(courier -> users (uuid));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    addresses,
     courier,
     users,
 );
