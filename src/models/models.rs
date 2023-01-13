@@ -1,15 +1,15 @@
 use actix_web::body::BoxBody;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use actix_web::http::header::ContentType;
-// use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use diesel::{Queryable, Insertable, AsChangeset};
-// use uuid::Uuid;
+use uuid::Uuid;
+use chrono::NaiveDateTime;
 use crate::schema::schema::*;
+
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 pub struct User {
-    // pub uuid: Uuid,
     pub first_name: String,
     pub address: String,
     pub phone_number: String,
@@ -18,8 +18,9 @@ pub struct User {
     pub role: String,       // USER / COURIER / ADMIN
     pub is_blocked: bool,
     pub is_deleted: bool,
-    // pub created_at: NaiveDateTime,
-    // pub updated_at: NaiveDateTime
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub uuid: Uuid,
 }
 
 pub enum Roles {
@@ -30,44 +31,48 @@ pub enum Roles {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 pub struct Courier {
-    // pub uuid: Uuid,
     pub is_free: bool,
     pub rating: f64,
+    pub uuid: Uuid,
 }
 
 #[derive(Insertable, Debug)]
+#[derive(AsChangeset)]
 #[diesel(table_name = users)]
 pub struct Users {
-    // pub uuid: Uuid,
     pub first_name: String,
     pub address: String,
     pub phone_number: String,
     pub email: String,
     pub password: String,
-    pub role: String,
+    pub role: String,       // USER / COURIER / ADMIN
     pub is_blocked: bool,
     pub is_deleted: bool,
-    // pub created_at: NaiveDateTime,
-    // pub updated_at: NaiveDateTime
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub uuid: Uuid,
 }
 
 #[derive(Insertable, Debug)]
 #[diesel(belongs_to(users))]
+#[derive(AsChangeset)]
 #[diesel(table_name = courier)]
 pub struct Couriers {
-    // pub uuid: Uuid,
     pub is_free: bool,
     pub rating: f64,
+    pub uuid: Uuid,
 }
 
-#[derive(Insertable, Debug, Deserialize, Serialize)]
-#[diesel(table_name = users)]
-pub struct CreateNewUser {
-    pub first_name: String,
-    pub phone_number: String,
-    pub email: String,
-    pub password: String
-}
+// #[derive(Insertable, Debug, Deserialize, Serialize)]
+// #[diesel(table_name = users)]
+// #[derive(AsChangeset)]
+// pub struct CreateNewUser {
+//     pub first_name: String,
+//     pub phone_number: String,
+//     pub email: String,
+//     pub password: String,
+//     pub role: String,
+// }
 
 
 #[derive(Insertable, Debug, Deserialize, Serialize)]
@@ -80,6 +85,12 @@ pub struct UpdateUserProfile {
     pub password: String
 }
 
+#[derive(Insertable, Debug)]
+#[diesel(table_name = courier)]
+#[derive(AsChangeset)]
+pub struct UpdateCourierRating {
+    pub rating: f64,
+}
 
 impl Responder for User {
     type Body = BoxBody;
@@ -92,3 +103,18 @@ impl Responder for User {
            .body(res_body)
     }
 }
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LoginResponse {
+    pub message: String,
+    pub status: bool,
+    pub token: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Response {
+    pub message: String,
+    pub status: bool,
+}
+

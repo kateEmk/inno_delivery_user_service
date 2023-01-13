@@ -1,13 +1,15 @@
 use std::env;
 use actix_web::web::block;
-use argonautica::{Hasher, Verifier};
 use chrono::{Duration, Utc};
 use color_eyre::Result;
 use eyre::{eyre, Report};
-use futures::compat::Future01CompatExt;
+// use futures::compat::Future01CompatExt;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
 use dotenv::dotenv;
+use password_hash::{PasswordHash, PasswordVerifier, SaltString, rand_core::OsRng, PasswordHasher, };
+use scrypt::Scrypt;
+use crate::errors::errors::AuthError;
 
 
 #[derive(Debug, Clone)]
@@ -26,29 +28,15 @@ pub struct Auth {
 
 impl CryptoService {
 
-    pub async fn hash_password(password: String) -> Result<String, Report> {
-        let hash_secret_key = get_hash_secret_key();
-
-        Hasher::default()
-            .with_secret_key(hash_secret_key)
-            .with_password(password)
-            .hash_non_blocking()
-            .compat()
-            .await
-            .map_err(|err| eyre!("Hashing error: {:?}", err))
+    pub async fn hash_password_with_salt(password: String) -> password_hash::Result<PasswordHash<'static>>{
+        let salt: &'static SaltString  = &SaltString::generate(OsRng);
+        return Scrypt.hash_password(password.as_ref(),  salt)
     }
 
-    pub async fn verify_password(password: &str, password_hash: &str) -> Result<bool, Report> {
-        let hash_secret_key = get_hash_secret_key();
-
-        Verifier::default()
-            .with_secret_key(hash_secret_key)
-            .with_hash(password_hash)
-            .with_password(password)
-            .verify_non_blocking()
-            .compat()
-            .await
-            .map_err(|err| eyre!("Verifying error: {}", err))
+    pub async fn verify_password_with_salt(password: &str, password_hash: &str) -> Result<(), AuthError> {
+        let hash = PasswordHash::new(password_hash).map_err(|_| AuthError::VerifyError)?;
+        let algs: &[&dyn PasswordVerifier] = &[&Scrypt];
+        hash.verify_password( algs, password).map_err(|_| AuthError::VerifyError)
     }
 
     pub async fn generate_jwt(user_id: i32) -> Result<jsonwebtoken::errors::Result<String>, Report> {

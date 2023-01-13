@@ -6,17 +6,18 @@ mod schema;
 mod services;
 mod errors;
 mod middleware;
-mod tests;
 
 extern crate serde;
 extern crate serde_json;
 
 extern crate diesel;
+
 use std::{io::Error, env};
 use actix_web::{App, HttpServer};
 use dotenv::dotenv;
-use crate::routes::user_routes::user_routes;
 use crate::resources::db::establish_connection;
+use crate::routes::courier_routes::courier_routes;
+use crate::routes::user_routes::user_routes;
 use crate::routes::auth_routes::auth_routes;
 
 
@@ -32,10 +33,10 @@ async fn main() -> Result<(), Error> {
     HttpServer::new(move || {
 
         App::new()
-            // .app_data(establish_connection())
             .app_data(actix_web::web::Data::new(establish_connection()))
-            .service(user_routes())
             .service(auth_routes())
+            .service(user_routes())
+            .service(courier_routes())
     })
     .bind("127.0.0.1:8080")?
     .run()

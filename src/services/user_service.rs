@@ -1,67 +1,39 @@
-use actix_web::{web};
+use actix_web::{HttpResponse, web};
 use std::vec::Vec;
 use diesel::{PgConnection, QueryDsl, RunQueryDsl};
-use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::result::Error;
-use r2d2::PooledConnection;
+use serde_json::{json, Value};
 
 extern crate uuid;
 use uuid::Uuid;
 
-use crate::models::models::{CreateNewUser, UpdateUserProfile, User};
+use crate::models::models::{UpdateUserProfile, User};
 use crate::schema::schema::users::dsl::*;
 use crate::diesel::ExpressionMethods;
-use crate::middleware::jwt::CryptoService;
-
-
-pub async fn create(mut conn: PooledConnection<ConnectionManager<PgConnection>>, user: web::Json<CreateNewUser>) -> Result<CreateNewUser, String> {
-    let user_already_exists = users
-            .filter(email.eq(&user.email))
-            .load::<User>(&mut conn)
-            .unwrap();
-
-    if user_already_exists.is_empty() {
-        let password_hash = CryptoService::hash_password(user.password.to_string())
-            .await
-            .expect("Password couldn't be hashed");
-
-        CryptoService::verify_password(&*user.password, &*password_hash)
-            .await
-            .expect("Password couldn't be verified");
-
-        let new_user = CreateNewUser {
-            first_name: (&user.first_name).to_string(),
-            phone_number: (&user.phone_number).to_string(),
-            email: (&user.email).to_string(),
-            password: (&user.password).to_string(),
-        };
-
-        diesel::insert_into(users)
-            .values(&new_user)
-            .execute(&mut conn)
-            .expect("Could not create new user");
-
-        return Ok(new_user);
-    }
-
-    Err(String::from("Email already in use"))
-}
+use crate::middleware::jwt_crypto::CryptoService;
 
 
 pub fn get_users(mut conn: PooledConnection<ConnectionManager<PgConnection>>) -> Result<Vec<User>, Error> {
     let result = users.load::<User>(&mut conn)?;
-    Ok(result)
+    return Ok(result)
 }
 
-pub fn get_user_by_id(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid) -> Result<User, Error> {
-    let user = users
+pub async fn get_user_by_id(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid) -> Result<User, Error> {
+    users
+        .clone()
         .filter(uuid.eq(id_user))
-        .first::<User>(&mut conn);
-    return user
+        .first::<User>(&mut conn)
+}
+
+pub fn extract_field(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid, field: Option<String>) -> Result<Option<String>, Error>{
+    users
+        .filter(uuid.eq(id_user))
+        .select(field)
+        .first(&mut conn)?
 }
 
 pub fn update(mut conn: PooledConnection<ConnectionManager<PgConnection>>, new_user: web::Json<UpdateUserProfile>, id_user: Uuid) -> Result<(), Error> {
-
     diesel::update(
         users.filter(uuid.eq(id_user)))
         .set((
@@ -72,11 +44,36 @@ pub fn update(mut conn: PooledConnection<ConnectionManager<PgConnection>>, new_u
         ))
         .get_result::<User>(&mut conn).unwrap();
 
-    Ok(())
+    return Ok(())
+}
+
+pub async fn update_exact_field(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid, field: String, new_value: String) -> Result<(), Error> {
+    diesel::update(users.filter(uuid.eq(id_user)))
+        .set(field.eq(&*new_value.to_string()))
+        .execute(&mut conn)
+        .expect("User couldn't update field");
+
+    return Ok(())
+}
+
+pub async fn update_user_password(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid, new_password: String) -> Result<(), Error> {
+    let password_hash = CryptoService::hash_password_with_salt((&new_password).parse().unwrap())
+        .await
+        .expect("Password couldn't be hashed");
+
+    CryptoService::verify_password_with_salt(&*new_password, &*password_hash)
+        .await
+        .expect("Password couldn't be verified");
+
+    diesel::update(users.filter(uuid.eq(id_user)))
+        .set(password.eq(&new_password))
+        .execute(&mut conn)
+        .expect("User couldn't update password");
+
+    return Ok(())
 }
 
 pub fn delete(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid) -> Result<(), Error> {
-
     diesel::update(users.filter({
             is_deleted.eq(false);
             uuid.eq(id_user)
@@ -85,5 +82,5 @@ pub fn delete(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_us
         .execute(&mut conn)
         .expect("User couldn't be deleted");
 
-    Ok(())
+    return Ok(())
 }
