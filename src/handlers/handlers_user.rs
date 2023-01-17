@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::resources::db::{PostgresPool};
 use crate::errors::errors::*;
-use crate::models::models::{UpdateUserProfile};
+use crate::models::user_models::{UpdateUserProfile};
 use crate::services::user_service::*;
 
 

@@ -7,7 +7,7 @@ use diesel::result::Error;
 extern crate uuid;
 use uuid::Uuid;
 
-use crate::models::models::{UpdateUserProfile, User};
+use crate::models::user_models::{UpdateUserProfile, User};
 use crate::schema::schema::users::dsl::*;
 use crate::middleware::jwt_crypto::CryptoService;
 

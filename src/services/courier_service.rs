@@ -6,7 +6,7 @@ use diesel::result::Error;
 extern crate uuid;
 use uuid::Uuid;
 
-use crate::models::models::Courier;
+use crate::models::courier_models::Courier;
 use crate::schema::schema::courier::dsl::*;
 
 

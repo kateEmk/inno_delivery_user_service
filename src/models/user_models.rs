@@ -2,9 +2,9 @@ use actix_web::body::BoxBody;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use actix_web::http::header::ContentType;
 use serde::{Deserialize, Serialize};
-use diesel::{Queryable, Insertable, AsChangeset};
+use diesel::{Queryable, Insertable};
 use chrono::NaiveDateTime;
-use crate::schema::schema::{users, courier};
+use crate::schema::schema::users;
 
 extern crate uuid;
 use uuid::Uuid;
@@ -25,19 +25,6 @@ pub struct User {
     pub uuid: Uuid,
 }
 
-// pub enum Roles {
-//     User(String),
-//     Courier(String),
-//     Admin(String)
-// }
-
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
-pub struct Courier {
-    pub is_free: bool,
-    pub rating: f64,
-    pub uuid: Uuid,
-}
-
 #[derive(Queryable, PartialEq, Debug)]
 #[diesel(table_name = users)]
 pub struct Users {
@@ -51,15 +38,6 @@ pub struct Users {
     pub is_deleted: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-    pub uuid: Uuid,
-}
-
-#[derive(Queryable, PartialEq, Debug)]
-#[diesel(belongs_to(users))]
-#[diesel(table_name = courier)]
-pub struct Couriers {
-    pub is_free: bool,
-    pub rating: f64,
     pub uuid: Uuid,
 }
 
@@ -83,13 +61,6 @@ pub struct UpdateUserProfile {
     pub password: String
 }
 
-#[derive(Insertable, Debug)]
-#[diesel(table_name = courier)]
-#[derive(AsChangeset)]
-pub struct UpdateCourierRating {
-    pub rating: f64,
-}
-
 impl Responder for User {
     type Body = BoxBody;
 
@@ -101,17 +72,3 @@ impl Responder for User {
            .body(res_body)
     }
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LoginResponse {
-    pub message: String,
-    pub status: bool,
-    pub token: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Response {
-    pub message: String,
-    pub status: bool,
-}
-

@@ -1,7 +1,7 @@
 use crate::services::auth_service;
 use actix_web::{web, HttpResponse, Responder};
 use crate::errors::errors::ServiceError;
-use crate::models::models::CreateNewUser;
+use crate::models::user_models::CreateNewUser;
 use crate::resources::db::PostgresPool;
 
 

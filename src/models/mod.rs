@@ -1,1 +1,2 @@
-pub mod models;
+pub mod user_models;
+pub mod courier_models;

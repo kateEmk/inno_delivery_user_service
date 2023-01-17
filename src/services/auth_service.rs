@@ -1,4 +1,4 @@
-use crate::models::models::{User, CreateNewUser};
+use crate::models::user_models::{User, CreateNewUser};
 use actix_web::web;
 
 use diesel::{PgConnection, QueryDsl, RunQueryDsl, ExpressionMethods};
