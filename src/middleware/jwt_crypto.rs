@@ -3,14 +3,16 @@ use actix_web::web::block;
 use chrono::{Duration, Utc};
 use color_eyre::Result;
 use eyre::{eyre, Report};
-// use futures::compat::Future01CompatExt;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
 use dotenv::dotenv;
-use password_hash::{PasswordHash, PasswordVerifier, SaltString, rand_core::OsRng, PasswordHasher, };
+use password_hash::{PasswordHash, PasswordVerifier};
 use scrypt::Scrypt;
 use crate::errors::errors::AuthError;
-
+use ring::rand::SecureRandom;
+use ring::{digest, pbkdf2, rand};
+use std::num::NonZeroU32;
+use std::ops::Deref;
 
 #[derive(Debug, Clone)]
 pub struct CryptoService;
@@ -28,15 +30,30 @@ pub struct Auth {
 
 impl CryptoService {
 
-    pub async fn hash_password_with_salt(password: String) -> password_hash::Result<PasswordHash<'static>>{
-        let salt: &'static SaltString  = &SaltString::generate(OsRng);
-        return Scrypt.hash_password(password.as_ref(),  salt)
+    pub async fn hash_password_with_salt(password: String) -> [u8; 64] {
+        const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
+        let n_iter = NonZeroU32::new(100_000).unwrap();
+        let rng = rand::SystemRandom::new();
+
+        let mut salt = [0u8; CREDENTIAL_LEN];
+        rng.fill(&mut salt).expect("TODO: panic message");
+
+        let mut pbkdf2_hash = [0u8; CREDENTIAL_LEN];
+        pbkdf2::derive(
+            pbkdf2::PBKDF2_HMAC_SHA512,
+            n_iter,
+            &salt,
+            password.as_bytes(),
+            &mut pbkdf2_hash,
+        );
+        return pbkdf2_hash
     }
 
-    pub async fn verify_password_with_salt(password: &str, password_hash: &str) -> Result<(), AuthError> {
-        let hash = PasswordHash::new(password_hash).map_err(|_| AuthError::VerifyError)?;
+    pub async fn verify_password_with_salt(password: &str, password_hash: &[u8]) -> Result<(), AuthError> {
+        let password_as_string = String::from_utf8_lossy(&password_hash);
+        let hash = PasswordHash::new(password_as_string.deref()).map_err(|_| AuthError::VerifyError)?;
         let algs: &[&dyn PasswordVerifier] = &[&Scrypt];
-        hash.verify_password( algs, password).map_err(|_| AuthError::VerifyError)
+        hash.verify_password(algs, &password.as_bytes()).map_err(|_| AuthError::VerifyError)
     }
 
     pub async fn generate_jwt(user_id: i32) -> Result<jsonwebtoken::errors::Result<String>, Report> {

@@ -36,8 +36,6 @@ impl ResponseError for ServiceError {
 
 #[derive(Debug, Display)]
 pub enum AuthError {
-    #[display(fmt = "Error during validating")]
-    ErrorValidating,
     #[display(fmt = "Error during verifying password")]
     VerifyError,
 }
@@ -45,9 +43,6 @@ pub enum AuthError {
 impl ResponseError for AuthError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            AuthError::ErrorValidating => {
-                HttpResponse::BadGateway().json("Error during validating (JWT Auth), Please try later")
-            },
             AuthError::VerifyError => {
                 HttpResponse::ExpectationFailed().json("Error during verifying password.")
             },

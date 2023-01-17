@@ -3,9 +3,11 @@ use actix_web::{HttpRequest, HttpResponse, Responder};
 use actix_web::http::header::ContentType;
 use serde::{Deserialize, Serialize};
 use diesel::{Queryable, Insertable, AsChangeset};
-use uuid::Uuid;
 use chrono::NaiveDateTime;
-use crate::schema::schema::*;
+use crate::schema::schema::{users, courier};
+
+extern crate uuid;
+use uuid::Uuid;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
@@ -23,11 +25,11 @@ pub struct User {
     pub uuid: Uuid,
 }
 
-pub enum Roles {
-    User(String),
-    Courier(String),
-    Admin(String)
-}
+// pub enum Roles {
+//     User(String),
+//     Courier(String),
+//     Admin(String)
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 pub struct Courier {
@@ -36,8 +38,7 @@ pub struct Courier {
     pub uuid: Uuid,
 }
 
-#[derive(Insertable, Debug)]
-#[derive(AsChangeset)]
+#[derive(Queryable, PartialEq, Debug)]
 #[diesel(table_name = users)]
 pub struct Users {
     pub first_name: String,
@@ -53,9 +54,8 @@ pub struct Users {
     pub uuid: Uuid,
 }
 
-#[derive(Insertable, Debug)]
+#[derive(Queryable, PartialEq, Debug)]
 #[diesel(belongs_to(users))]
-#[derive(AsChangeset)]
 #[diesel(table_name = courier)]
 pub struct Couriers {
     pub is_free: bool,
@@ -63,21 +63,19 @@ pub struct Couriers {
     pub uuid: Uuid,
 }
 
-// #[derive(Insertable, Debug, Deserialize, Serialize)]
-// #[diesel(table_name = users)]
-// #[derive(AsChangeset)]
-// pub struct CreateNewUser {
-//     pub first_name: String,
-//     pub phone_number: String,
-//     pub email: String,
-//     pub password: String,
-//     pub role: String,
-// }
-
-
-#[derive(Insertable, Debug, Deserialize, Serialize)]
+#[derive(Queryable, PartialEq, Debug, Deserialize, Insertable)]
 #[diesel(table_name = users)]
-#[derive(AsChangeset)]
+pub struct CreateNewUser {
+    pub first_name: String,
+    pub phone_number: String,
+    pub email: String,
+    pub password: String,
+    pub role: String,
+}
+
+
+#[derive(Queryable, PartialEq, Debug, Deserialize)]
+#[diesel(table_name = users)]
 pub struct UpdateUserProfile {
     pub first_name: String,
     pub phone_number: String,
@@ -103,7 +101,6 @@ impl Responder for User {
            .body(res_body)
     }
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LoginResponse {
