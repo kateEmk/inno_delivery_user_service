@@ -30,6 +30,15 @@ pub struct Auth {
 
 impl CryptoService {
 
+    pub fn jwt_factory(claims: Claims) -> String {
+        let jwt_secretkey = get_jwt_secret_key();
+        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(jwt_secretkey.as_bytes()));
+        match token {
+            Ok(jwt) => jwt,
+            _ => String::from("Could not create token")
+        }
+}
+
     pub async fn hash_password_with_salt(password: String) -> [u8; 64] {
         const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
         let n_iter = NonZeroU32::new(100_000).unwrap();

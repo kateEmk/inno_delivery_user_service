@@ -61,6 +61,15 @@ pub struct UpdateUserProfile {
     pub password: String
 }
 
+#[derive(Queryable, PartialEq, Debug, Serialize, Deserialize)]
+#[diesel(table_name = users)]
+pub struct UserProfile {
+    pub first_name: String,
+    pub phone_number: String,
+    pub email: String,
+    pub password: String
+}
+
 impl Responder for User {
     type Body = BoxBody;
 

@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use diesel::Queryable;
-use crate::schema::schema::{users, courier};
 
 extern crate uuid;
 use uuid::Uuid;

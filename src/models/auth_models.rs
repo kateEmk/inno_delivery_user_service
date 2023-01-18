@@ -1,24 +1,26 @@
-use actix_web::body::BoxBody;
-use actix_web::{HttpRequest, HttpResponse, Responder};
-use actix_web::http::header::ContentType;
 use serde::{Deserialize, Serialize};
-use diesel::{Queryable, Insertable, AsChangeset};
-use chrono::NaiveDateTime;
-use crate::schema::schema::{users, courier};
 
-extern crate uuid;
-use uuid::Uuid;
-
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LoginResponse {
-    pub message: String,
-    pub status: bool,
-    pub token: String,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthData {
+    pub email: String,
+    pub password: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Response {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UserLoginResponse {
+    pub user_logged_in: UserLoggedIn
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserLoginError {
     pub message: String,
-    pub status: bool,
+    pub error: String
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UserLoggedIn {
+    pub first_name: String,
+    pub email: String,
+    pub jwt: String,
+    pub refresh_token: Option<String>
 }

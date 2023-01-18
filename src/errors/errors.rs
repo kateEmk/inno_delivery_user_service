@@ -38,6 +38,10 @@ impl ResponseError for ServiceError {
 pub enum AuthError {
     #[display(fmt = "Error during verifying password")]
     VerifyError,
+    #[display(fmt = "User doesn't authorised")]
+    Unauthorized,
+    #[display(fmt = "Invalid password")]
+    InvalidPaassword,
 }
 
 impl ResponseError for AuthError {
@@ -46,6 +50,12 @@ impl ResponseError for AuthError {
             AuthError::VerifyError => {
                 HttpResponse::ExpectationFailed().json("Error during verifying password.")
             },
+            AuthError::Unauthorized => {
+                HttpResponse::Unauthorized().json("User doesn't authorised.")
+            },
+            AuthError::InvalidPaassword => {
+                HttpResponse::Unauthorized().json("Invalid password.")
+            }
         }
     }
 }
