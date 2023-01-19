@@ -1,7 +1,6 @@
 use crate::services::auth_service;
 use actix_web::{web, HttpResponse, Responder, };
 use actix_web::cookie::Cookie;
-use uuid::Uuid;
 use crate::errors::errors::{AuthError, ServiceError};
 use crate::models::auth_models::{AuthData, UserLoginError, UserLoginResponse};
 use crate::models::user_models::CreateNewUser;
@@ -21,7 +20,7 @@ pub async fn register(pool: web::Data<PostgresPool>, item: web::Json<CreateNewUs
     }
 }
 
-pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>, id: Uuid) -> impl Responder {
+pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>) -> impl Responder {
     let conn = pool.get().unwrap();
 
     let logged_in_user = auth_service::login_user(conn, auth_data.into_inner());

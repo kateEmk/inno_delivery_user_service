@@ -79,7 +79,9 @@ pub async fn handle_login(existing_user: User, user_to_login: AuthData) -> Resul
         sub: existing_user.uuid.get_version_num() as i32,
         exp: timestamp_for_refresh as i64,
     };
+
     let refresh_jwt = CryptoService::jwt_factory(refresh_token_claims);
+    CryptoService::verify_jwt(String::from(&refresh_jwt));
 
     let logged_in_user = UserLoggedIn {
         first_name: existing_user.first_name,

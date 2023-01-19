@@ -3,5 +3,6 @@
 
  pub fn auth_routes() -> Scope {
      web::scope("/user")
-         .route("/register", web::get().to(register))
+         .route("/register", web::post().to(register))
+         .route("/login", web::post().to(login))
  }
