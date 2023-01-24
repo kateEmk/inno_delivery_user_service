@@ -6,11 +6,6 @@ pub struct AuthData {
     pub password: String
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct UserLoginResponse {
-    pub user_logged_in: UserLoggedIn
-}
-
 #[derive(Debug, Serialize)]
 pub struct UserLoginError {
     pub message: String,
@@ -22,5 +17,5 @@ pub struct UserLoggedIn {
     pub first_name: String,
     pub email: String,
     pub jwt: String,
-    pub refresh_token: Option<String>
+    pub refresh_token: String
 }

@@ -2,7 +2,7 @@
  use crate::handlers::handlers_auth::*;
 
  pub fn auth_routes() -> Scope {
-     web::scope("/user")
+     web::scope("/")
          .route("/register", web::post().to(register))
-         .route("/login", web::post().to(login))
+         .route("/login", web::get().to(login))
  }

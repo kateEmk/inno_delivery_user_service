@@ -18,14 +18,14 @@ pub fn get_users(mut conn: PooledConnection<ConnectionManager<PgConnection>>) ->
 }
 
 pub async fn get_user_by_id(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid) -> Result<User, Error> {
-    users
+    Ok(users
         .clone()
         .filter(uuid.eq(id_user))
-        .first::<User>(&mut conn)
+        .get_result::<User>(&mut conn).unwrap())
 }
 
-pub fn update(mut conn: PooledConnection<ConnectionManager<PgConnection>>, new_user: web::Json<UpdateUserProfile>, id_user: Uuid) -> Result<(), Error> {
-    diesel::update(
+pub fn update(mut conn: PooledConnection<ConnectionManager<PgConnection>>, new_user: web::Json<UpdateUserProfile>, id_user: Uuid) -> Result<User, Error>  {
+    Ok(diesel::update(
         users.filter(uuid.eq(id_user)))
         .set((
             first_name.eq(&new_user.first_name),
@@ -33,9 +33,7 @@ pub fn update(mut conn: PooledConnection<ConnectionManager<PgConnection>>, new_u
             email.eq(&new_user.email),
             password.eq(&new_user.password)
         ))
-        .get_result::<User>(&mut conn).unwrap();
-
-    return Ok(())
+        .get_result::<User>(&mut conn).unwrap())
 }
 
 pub async fn update_user_password(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid, new_password: String) -> Result<(), Error> {

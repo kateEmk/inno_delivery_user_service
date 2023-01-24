@@ -1,9 +1,8 @@
 use std::env;
 use actix_web::web::block;
-use chrono::{Duration, Utc};
 use color_eyre::Result;
-use eyre::{eyre, Report};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
+use eyre::eyre;
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use dotenv::dotenv;
 use password_hash::{PasswordHash, PasswordVerifier};
@@ -37,7 +36,7 @@ impl CryptoService {
             Ok(jwt) => jwt,
             _ => String::from("Could not create token")
         }
-}
+    }
 
     pub async fn hash_password_with_salt(password: String) -> [u8; 64] {
         const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
@@ -65,40 +64,22 @@ impl CryptoService {
         hash.verify_password(algs, &password.as_bytes()).map_err(|_| AuthError::VerifyError)
     }
 
-    pub async fn generate_jwt(user_id: i32) -> Result<jsonwebtoken::errors::Result<String>, Report> {
+    pub async fn verify_jwt(token: String) -> bool {
         let jwt_secret_key = get_jwt_secret_key();
 
-        block(move || {
-            let headers = Header::default();
-            let encoding_key = EncodingKey::from_secret(jwt_secret_key.as_bytes());
-            let now = Utc::now() + Duration::days(1);
-            let claims = Claims {
-                sub: user_id,
-                exp: now.timestamp(),
-            };
-            encode(&headers, &claims, &encoding_key)
-        })
-            .await
-        .map_err(|err| eyre!("Creating jwt token: {}", err))
-    }
-
-    pub async fn verify_jwt(token: String) -> Result<jsonwebtoken::errors::Result<TokenData<Claims>>, Report> {
-        let jwt_secret_key = get_jwt_secret_key();
-
-        block(move || {
+        let decoded_token = block(move || {
             let decoding_key = DecodingKey::from_secret(jwt_secret_key.as_bytes());
             let validation = Validation::default();
             decode::<Claims>(&token, &decoding_key, &validation)
         })
         .await
-        .map_err(|err| eyre!("Verifying jwt token: {}", err))
+        .map_err(|err| eyre!("Verifying jwt token: {}", err));
+
+        match decoded_token {
+            Ok(_) => true,
+            Err(_) => false
+        }
     }
-}
-
-
-pub fn get_hash_secret_key() -> String {
-    dotenv().ok();
-    env::var("hash_secret_key").unwrap_or("none".to_string())
 }
 
 pub fn get_jwt_secret_key() -> String {

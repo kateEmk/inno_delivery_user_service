@@ -1,4 +1,4 @@
-use crate::models::user_models::{User, CreateNewUser, UserProfile};
+use crate::models::user_models::{User, CreateNewUser};
 use actix_web::web;
 use chrono::{Duration, Utc};
 
@@ -12,7 +12,7 @@ use crate::models::auth_models::{AuthData, UserLoggedIn};
 use crate::schema::schema::users::dsl::*;
 
 
-pub async fn signup(mut conn: PooledConnection<ConnectionManager<PgConnection>>, user: web::Json<CreateNewUser>, role_choice: String) -> Result<CreateNewUser, String> {
+pub async fn signup(mut conn: PooledConnection<ConnectionManager<PgConnection>>, user: web::Json<CreateNewUser>) -> Result<CreateNewUser, String> {
     let user_already_exists = users
             .filter(email.eq(&user.email))
             .load::<User>(&mut conn)
@@ -31,7 +31,7 @@ pub async fn signup(mut conn: PooledConnection<ConnectionManager<PgConnection>>,
             "phone_number": user.phone_number,
             "email": user.email,
             "password": String::from_utf8_lossy(&password_hash).to_string(),
-            "role": role_choice,
+            "role": user.role,
         }).to_owned();
         let converted = json.as_str();
 
@@ -65,7 +65,6 @@ pub async fn handle_login(existing_user: User, user_to_login: AuthData) -> Resul
     let password_hash = CryptoService::hash_password_with_salt((&user_to_login.password).parse().unwrap()).await;
     CryptoService::verify_password_with_salt(&*existing_user.password, &password_hash).await.expect("Password couldn't be verified");
 
-
     let fifteen_min_from_now = Utc::now() + Duration::minutes(15);
     let timestamp_for_access = usize::try_from(fifteen_min_from_now.timestamp()).unwrap();
     let access_token_claims = Claims {
@@ -81,14 +80,13 @@ pub async fn handle_login(existing_user: User, user_to_login: AuthData) -> Resul
     };
 
     let refresh_jwt = CryptoService::jwt_factory(refresh_token_claims);
-    CryptoService::verify_jwt(String::from(&refresh_jwt));
+    CryptoService::verify_jwt(String::from(&refresh_jwt)).await;
 
     let logged_in_user = UserLoggedIn {
         first_name: existing_user.first_name,
         email: existing_user.email,
         jwt: CryptoService::jwt_factory(access_token_claims),
-        refresh_token: Option::from(refresh_jwt),
+        refresh_token: refresh_jwt
     };
     Ok(logged_in_user)
-
 }

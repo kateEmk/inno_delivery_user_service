@@ -6,6 +6,6 @@
          .route("/", web::get().to(get_all_users))
          .route("/{uuid}", web::get().to(get_user))
          .route("/{uuid}", web::put().to(update_user))
-         .route("/{uuid}", web::put().to(update_password))
+         .route("/{uuid}/update-password", web::put().to(update_password))
          .route("/{uuid}", web::delete().to(delete_user))
  }

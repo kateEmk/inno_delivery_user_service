@@ -2,24 +2,37 @@ use crate::services::auth_service;
 use actix_web::{web, HttpResponse, Responder, };
 use actix_web::cookie::Cookie;
 use crate::errors::errors::{AuthError, ServiceError};
-use crate::models::auth_models::{AuthData, UserLoginError, UserLoginResponse};
-use crate::models::user_models::CreateNewUser;
+use crate::models::auth_models::{AuthData, UserLoggedIn, UserLoginError};
+use crate::models::user_models::{CreateNewUser, RetrieveUserResponse};
 use crate::resources::db::PostgresPool;
+use tracing::instrument;
 
-
-pub async fn register(pool: web::Data<PostgresPool>, item: web::Json<CreateNewUser>, role: String) -> impl Responder {
+#[instrument]
+pub async fn register(pool: web::Data<PostgresPool>, item: web::Json<CreateNewUser>) -> impl Responder {
     let conn = pool.get().unwrap();
 
     let user = web::block(move || {
-        auth_service::signup(conn, item, role)
-    }).await;
+        auth_service::signup(conn, item)
+    }).await.unwrap();
 
-    match user {
-        Ok(ref _user) => Ok(HttpResponse::Created().json("User created")),
-        Err(_err) => Err(ServiceError::Unauthorised),
+    match user.await {
+        Ok(user) => {
+            let created_user = RetrieveUserResponse {
+                first_name: user.first_name.to_string(),
+                phone_number: user.phone_number.to_string(),
+                email: user.email.to_string(),
+                role: user.role.to_string(),
+            };
+            Ok(HttpResponse::Created().json(serde_json::to_string(&created_user).unwrap()))
+        },
+        Err(_err) => {
+            // log::error!("{:?}", err);
+            Err(ServiceError::BadRequest("Couldn't create user's account".to_string()))
+        },
     }
 }
 
+#[instrument]
 pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -27,8 +40,7 @@ pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>
 
     match logged_in_user.await {
         Ok(user) => {
-
-            let cookie = Cookie::build("refresh_token", user.clone().refresh_token.unwrap())
+            let cookie = Cookie::build("refresh_token", user.clone().refresh_token)
                 .domain("http://localhost:3000")
                 .secure(true)
                 .http_only(true)
@@ -36,12 +48,16 @@ pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>
 
             HttpResponse::Ok()
                 .cookie(cookie)
-                .json(UserLoginResponse {
-                    user_logged_in: user
+                .json(UserLoggedIn {
+                    first_name: user.first_name,
+                    email: user.email,
+                    jwt: user.jwt,
+                    refresh_token: user.refresh_token,
                 })
         },
 
-        Err(error) => {
+        Err(_err) => {
+            // log::error!("{:?}", err);
             HttpResponse::Ok().json(UserLoginError {
                 message: String::from("Could not log user in"),
                 error: AuthError::Unauthorized.to_string(),

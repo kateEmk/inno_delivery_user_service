@@ -9,9 +9,6 @@ pub enum ServiceError {
     #[display(fmt = "BadRequest: {}", _0)]
     BadRequest(String),
 
-    #[display(fmt = "Unauthorised")]
-    Unauthorised,
-
     #[display(fmt = "User not found")]
     UserNotFound,
 }
@@ -24,9 +21,6 @@ impl ResponseError for ServiceError {
                 HttpResponse::InternalServerError().json("Internal Server Error, Please try later")
             }
             ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
-            ServiceError::Unauthorised => {
-                HttpResponse::Unauthorized().json("User is unauthorized")
-            }
             ServiceError::UserNotFound => {
                 HttpResponse::NotFound().json("User not found")
             }
@@ -39,9 +33,7 @@ pub enum AuthError {
     #[display(fmt = "Error during verifying password")]
     VerifyError,
     #[display(fmt = "User doesn't authorised")]
-    Unauthorized,
-    #[display(fmt = "Invalid password")]
-    InvalidPaassword,
+    Unauthorized
 }
 
 impl ResponseError for AuthError {
@@ -52,9 +44,6 @@ impl ResponseError for AuthError {
             },
             AuthError::Unauthorized => {
                 HttpResponse::Unauthorized().json("User doesn't authorised.")
-            },
-            AuthError::InvalidPaassword => {
-                HttpResponse::Unauthorized().json("Invalid password.")
             }
         }
     }

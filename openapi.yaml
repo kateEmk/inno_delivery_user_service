@@ -1,0 +1,338 @@
+openapi: 3.0.3
+info:
+  title: User service API
+  version: 1.0.11
+servers:
+  - url: 127.0.0.1:8000
+paths:
+  /register:
+    post:
+      tags:
+        - auth
+      summary: Create user
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterSchema'
+      responses:
+        '201':
+          description: User has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Couldn't create user's account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /login:
+    get:
+      tags:
+        - auth
+      summary: Logs user into the system
+      parameters:
+        - name: email
+          in: query
+          description: The user's email for login
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User has successfully been logged in
+          # headers:
+          #   X-Rate-Limit:
+          #     description: calls per hour allowed by the user
+          #     schema:
+          #       type: integer
+          #       format: int32
+          #   X-Expires-After:
+          #     description: date in UTC when token expires
+          #     schema:
+          #       type: string
+          #       format: date-time
+          content:
+            # application/xml:
+            #   schema:
+            #     type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLoginResponse'
+        '400':
+          description: Invalid email/password supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLoginErrorResponse'
+  /users:
+    get:
+      tags:
+        - user
+      summary: Returns list of user.
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Couldn't read data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /users/{uuid}:
+    get:
+      tags:
+        - user
+      summary: Returns user.
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A JSON of user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    put:
+      tags:
+        - user
+      summary: Update user profile
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A JSON of user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: User couldn't be updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User has been deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /users/{uuid}/update-password:
+    put:
+      tags:
+        - user
+      summary: Update user's password
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: New password
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Password has been updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Password couldn't be verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /couriers:
+    get:
+      tags:
+        - courier
+      summary: Returns list of couriers.
+      responses:
+        '200':
+          description: A list of couriers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Courier'
+        '400':
+          description: Couldn't read data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /couriers/{uuid}:
+    get:
+      tags:
+        - courier
+      summary: Returns courier's rating.
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Courier's rating.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        first_name:
+          type: string
+        phone_number:
+          type: string
+        email:
+          type: string
+          example: john@email.com
+        role:
+          type: string
+      xml:
+        name: user
+    Courier:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        rating:
+          type: number
+      xml:
+        name: courier
+    UserRegisterSchema:
+      type: object
+      properties:
+        first_name:
+          type: string
+        phone_number:
+          type: string
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+        role:
+          type: string
+      xml:
+        name: register_info
+    UserLoginResponse:
+      type: object
+      properties:
+        first_name:
+          type: string
+        email:
+          type: string
+        jwt:
+          type: string
+        refresh_token:
+          type: string
+    UserLoginErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string

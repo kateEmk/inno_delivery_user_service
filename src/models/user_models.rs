@@ -25,7 +25,7 @@ pub struct User {
     pub uuid: Uuid,
 }
 
-#[derive(Queryable, PartialEq, Debug)]
+#[derive(Queryable, PartialEq, Debug, Serialize)]
 #[diesel(table_name = users)]
 pub struct Users {
     pub first_name: String,
@@ -51,19 +51,18 @@ pub struct CreateNewUser {
     pub role: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct RetrieveUserResponse {
+    pub first_name: String,
+    pub phone_number: String,
+    pub email: String,
+    pub role: String,
+}
+
 
 #[derive(Queryable, PartialEq, Debug, Deserialize)]
 #[diesel(table_name = users)]
 pub struct UpdateUserProfile {
-    pub first_name: String,
-    pub phone_number: String,
-    pub email: String,
-    pub password: String
-}
-
-#[derive(Queryable, PartialEq, Debug, Serialize, Deserialize)]
-#[diesel(table_name = users)]
-pub struct UserProfile {
     pub first_name: String,
     pub phone_number: String,
     pub email: String,
