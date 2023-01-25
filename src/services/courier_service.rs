@@ -6,12 +6,12 @@ use diesel::result::Error;
 extern crate uuid;
 use uuid::Uuid;
 
-use crate::models::courier_models::Courier;
+use crate::models::courier_models::Couriers;
 use crate::schema::schema::courier::dsl::*;
 
 
-pub fn get_couriers(mut conn: PooledConnection<ConnectionManager<PgConnection>>) -> Result<Vec<Courier>, Error> {
-    let result = courier.load::<Courier>(&mut conn)?;
+pub fn get_couriers(mut conn: PooledConnection<ConnectionManager<PgConnection>>) -> Result<Vec<Couriers>, Error> {
+    let result = courier.load::<Couriers>(&mut conn)?;
     Ok(result)
 }
 

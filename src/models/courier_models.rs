@@ -1,18 +1,12 @@
-use serde::{Deserialize, Serialize};
-use diesel::Queryable;
+use serde::Serialize;
+use diesel::{Insertable, Queryable};
+use crate::schema::schema::courier;
 
 extern crate uuid;
 use uuid::Uuid;
 
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
-pub struct Courier {
-    pub is_free: bool,
-    pub rating: f64,
-    pub uuid: Uuid,
-}
-
-#[derive(Queryable, PartialEq, Debug)]
+#[derive(Queryable, PartialEq, Serialize, Debug, Insertable)]
 #[diesel(belongs_to(users))]
 #[diesel(table_name = courier)]
 pub struct Couriers {

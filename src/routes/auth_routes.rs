@@ -1,8 +1,9 @@
- use actix_web::{web, Scope};
+ use actix_web::web;
  use crate::handlers::handlers_auth::*;
 
- pub fn auth_routes() -> Scope {
-     web::scope("/")
-         .route("/register", web::post().to(register))
-         .route("/login", web::get().to(login))
- }
+ pub fn config_auth(conf: &mut web::ServiceConfig) {
+    let scope = web::scope("/auth")
+        .service(register)
+        .service(login);
+    conf.service(scope);
+}

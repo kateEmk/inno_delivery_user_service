@@ -6,9 +6,8 @@ use uuid::Uuid;
 use crate::resources::db::{PostgresPool};
 use crate::errors::errors::*;
 use crate::services::courier_service::*;
-use tracing::instrument;
 
-#[instrument]
+#[get("/")]
 pub async fn get_all_couriers(pool: web::Data<PostgresPool>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -19,13 +18,12 @@ pub async fn get_all_couriers(pool: web::Data<PostgresPool>) -> impl Responder {
     match result {
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::InternalServerError)
         },
     }
 }
 
-#[instrument]
+#[get("/{uuid}")]
 pub async fn get_courier_rating(pool: web::Data<PostgresPool>, courier_id: web::Path<Uuid>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -36,7 +34,6 @@ pub async fn get_courier_rating(pool: web::Data<PostgresPool>, courier_id: web::
     match rating.unwrap() {
         Ok(rating) => Ok(HttpResponse::Ok().json(rating.as_slice())),
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::UserNotFound)
         },
     }

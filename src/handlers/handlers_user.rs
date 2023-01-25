@@ -7,9 +7,9 @@ use crate::resources::db::{PostgresPool};
 use crate::errors::errors::*;
 use crate::models::user_models::{RetrieveUserResponse, UpdateUserProfile};
 use crate::services::user_service::*;
-use tracing::instrument;
 
-#[instrument(skip(user_id), fields(uuid = %user_id))]
+
+#[get("/{uuid}")]
 pub async fn get_user(pool: web::Data<PostgresPool>, user_id: web::Path<Uuid>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -27,12 +27,11 @@ pub async fn get_user(pool: web::Data<PostgresPool>, user_id: web::Path<Uuid>) -
             Ok(HttpResponse::Ok().json(serde_json::to_string(&user_info).unwrap()))
         },
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::UserNotFound) },
     }
 }
 
-#[instrument]
+#[get("/")]
 pub async fn get_all_users(pool: web::Data<PostgresPool>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -43,12 +42,11 @@ pub async fn get_all_users(pool: web::Data<PostgresPool>) -> impl Responder {
     match result {
         Ok(result) => Ok(HttpResponse::Ok().json(result.unwrap())),
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::InternalServerError) },
     }
 }
 
-#[instrument]
+#[put("/{uuid}")]
 pub async fn update_user(pool: web::Data<PostgresPool>, user_profile: web::Json<UpdateUserProfile>, user_id: web::Path<Uuid>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -67,12 +65,11 @@ pub async fn update_user(pool: web::Data<PostgresPool>, user_profile: web::Json<
             Ok(HttpResponse::Ok().json(serde_json::to_string(&user_info).unwrap()))
         },
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::BadRequest("User couldn't be updated".parse().unwrap())) },
     }
 }
 
-#[instrument]
+#[put("/{uuid}/update-password")]
 pub async fn update_password(pool: web::Data<PostgresPool>, id_user: web::Path<Uuid>, new_password: String) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -83,12 +80,11 @@ pub async fn update_password(pool: web::Data<PostgresPool>, id_user: web::Path<U
     match result.await {
         Ok(_result) => Ok(HttpResponse::Ok().body("User's password has been updated")),
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::BadRequest("User couldn't be updated".parse().unwrap())) },
     }
 }
 
-#[instrument]
+#[delete("/{uuid}")]
 pub async fn delete_user(pool: web::Data<PostgresPool>, user_id: web::Path<Uuid>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -101,7 +97,6 @@ pub async fn delete_user(pool: web::Data<PostgresPool>, user_id: web::Path<Uuid>
     match result {
         Ok(_result) => Ok(HttpResponse::Accepted().body("User has been deleted")),
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::UserNotFound) },
     }
 }

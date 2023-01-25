@@ -10,7 +10,7 @@ extern crate uuid;
 use uuid::Uuid;
 
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable)]
 pub struct User {
     pub first_name: String,
     pub address: String,
@@ -25,7 +25,7 @@ pub struct User {
     pub uuid: Uuid,
 }
 
-#[derive(Queryable, PartialEq, Debug, Serialize)]
+#[derive(Queryable, PartialEq, Debug, Serialize, Insertable)]
 #[diesel(table_name = users)]
 pub struct Users {
     pub first_name: String,
@@ -45,6 +45,7 @@ pub struct Users {
 #[diesel(table_name = users)]
 pub struct CreateNewUser {
     pub first_name: String,
+    pub address: String,
     pub phone_number: String,
     pub email: String,
     pub password: String,

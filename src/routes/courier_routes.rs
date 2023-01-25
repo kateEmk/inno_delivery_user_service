@@ -1,9 +1,9 @@
- use actix_web::{web, Scope};
+ use actix_web::web;
  use crate::handlers::handlers_courier::*;
 
-
- pub fn courier_routes() -> Scope {
-     web::scope("couriers")
-         .route("/", web::get().to(get_all_couriers))
-         .route("/{uuid}", web::get().to(get_courier_rating))
+  pub fn config_courier(conf: &mut web::ServiceConfig) {
+     let scope = web::scope("/api/v1/couriers")
+         .service(get_all_couriers)
+         .service(get_courier_rating);
+     conf.service(scope);
  }

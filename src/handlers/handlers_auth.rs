@@ -1,13 +1,13 @@
 use crate::services::auth_service;
-use actix_web::{web, HttpResponse, Responder, };
+use actix_web::{web, HttpResponse, Responder, post};
 use actix_web::cookie::Cookie;
 use crate::errors::errors::{AuthError, ServiceError};
 use crate::models::auth_models::{AuthData, UserLoggedIn, UserLoginError};
-use crate::models::user_models::{CreateNewUser, RetrieveUserResponse};
+use crate::models::user_models::{CreateNewUser};
 use crate::resources::db::PostgresPool;
-use tracing::instrument;
 
-#[instrument]
+
+#[post("/register")]
 pub async fn register(pool: web::Data<PostgresPool>, item: web::Json<CreateNewUser>) -> impl Responder {
     let conn = pool.get().unwrap();
 
@@ -17,22 +17,15 @@ pub async fn register(pool: web::Data<PostgresPool>, item: web::Json<CreateNewUs
 
     match user.await {
         Ok(user) => {
-            let created_user = RetrieveUserResponse {
-                first_name: user.first_name.to_string(),
-                phone_number: user.phone_number.to_string(),
-                email: user.email.to_string(),
-                role: user.role.to_string(),
-            };
-            Ok(HttpResponse::Created().json(serde_json::to_string(&created_user).unwrap()))
+            Ok(HttpResponse::Created().json(serde_json::to_string(&user).unwrap()))
         },
         Err(_err) => {
-            // log::error!("{:?}", err);
             Err(ServiceError::BadRequest("Couldn't create user's account".to_string()))
         },
     }
 }
 
-#[instrument]
+#[post("/login")]
 pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>) -> impl Responder {
     let conn = pool.get().unwrap();
 

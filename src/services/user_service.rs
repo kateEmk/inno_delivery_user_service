@@ -1,5 +1,6 @@
 use actix_web::web;
 use std::vec::Vec;
+use bcrypt::{hash, DEFAULT_COST};
 use diesel::{PgConnection, QueryDsl, RunQueryDsl, ExpressionMethods};
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::result::Error;
@@ -9,7 +10,6 @@ use uuid::Uuid;
 
 use crate::models::user_models::{UpdateUserProfile, User};
 use crate::schema::schema::users::dsl::*;
-use crate::middleware::jwt_crypto::CryptoService;
 
 
 pub fn get_users(mut conn: PooledConnection<ConnectionManager<PgConnection>>) -> Result<Vec<User>, Error> {
@@ -37,14 +37,10 @@ pub fn update(mut conn: PooledConnection<ConnectionManager<PgConnection>>, new_u
 }
 
 pub async fn update_user_password(mut conn: PooledConnection<ConnectionManager<PgConnection>>, id_user: Uuid, new_password: String) -> Result<(), Error> {
-    let password_hash = CryptoService::hash_password_with_salt((&new_password).parse().unwrap()).await;
-
-    CryptoService::verify_password_with_salt(&*new_password, &password_hash)
-        .await
-        .expect("Password couldn't be verified");
+    let password_hash = hash(&new_password, DEFAULT_COST);
 
     diesel::update(users.filter(uuid.eq(id_user)))
-        .set(password.eq(&new_password))
+        .set(password.eq(&password_hash.unwrap()))
         .execute(&mut conn)
         .expect("User couldn't update password");
 

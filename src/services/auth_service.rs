@@ -1,52 +1,71 @@
-use crate::models::user_models::{User, CreateNewUser};
+use crate::models::user_models::{User, CreateNewUser, RetrieveUserResponse};
 use actix_web::web;
 use chrono::{Duration, Utc};
 
 use diesel::{PgConnection, QueryDsl, RunQueryDsl, ExpressionMethods};
+use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
 use r2d2::PooledConnection;
-use serde_json::json;
 use crate::errors::errors::AuthError;
 use crate::middleware::jwt_crypto::{Claims, CryptoService};
 use crate::models::auth_models::{AuthData, UserLoggedIn};
+use crate::models::courier_models::{Couriers};
+use crate::schema::schema::courier::dsl::courier;
 use crate::schema::schema::users::dsl::*;
+use bcrypt::{DEFAULT_COST, verify, hash};
 
 
-pub async fn signup(mut conn: PooledConnection<ConnectionManager<PgConnection>>, user: web::Json<CreateNewUser>) -> Result<CreateNewUser, String> {
-    let user_already_exists = users
-            .filter(email.eq(&user.email))
-            .load::<User>(&mut conn)
-            .unwrap();
 
-    if user_already_exists.is_empty() {
-        let password_hash = CryptoService::hash_password_with_salt(user.password.to_string())
-            .await;
+pub async fn signup(mut conn: PooledConnection<ConnectionManager<PgConnection>>, user: web::Json<CreateNewUser>) -> Result<RetrieveUserResponse, String> {
+    let result = diesel::select(exists(
+        users.filter(email.eq(&user.email))))
+        .get_result(&mut conn);
+    assert_eq!(result, Ok(false));
 
-        CryptoService::verify_password_with_salt(&*user.password, &password_hash)
-            .await
-            .expect("Password couldn't be verified");
+    let password_hash = hash(&user.password, DEFAULT_COST);
 
-        let json = json!({
-            "first_name": user.first_name,
-            "phone_number": user.phone_number,
-            "email": user.email,
-            "password": String::from_utf8_lossy(&password_hash).to_string(),
-            "role": user.role,
-        }).to_owned();
-        let converted = json.as_str();
+    println!("{}", user.email);
+    let new_user = User {
+        first_name: (&user.first_name).to_string(),
+        address: String::default(),
+        phone_number: (&user.phone_number).to_string(),
+        email: (&user.email).to_string(),
+        password: password_hash.unwrap(),
+        role: (&user.role).to_string(),
+        is_blocked: false,
+        is_deleted: false,
+        created_at: Default::default(),
+        updated_at: Default::default(),
+        uuid: ::uuid::Uuid::new_v4().to_string().parse().unwrap(),
+    };
 
-        let user_form = serde_json::from_str::<CreateNewUser>(converted.unwrap()).expect("Couldn't get user");
+    diesel::insert_into(users)
+        .values(&new_user)
+        .execute(&mut conn)
+        .expect("Could not create new user");
 
-        diesel::insert_into(users)
-            .values(&user_form)
-            .execute(&mut conn)
-            .expect("Could not create new user");
+    if new_user.role == "Courier" {
+        let new_courier = Couriers {
+            is_free: true,
+            rating: 5.0,
+            uuid: new_user.uuid,
+        };
 
-        return Ok(user_form);
+        if user.role == "Courier" {
+            diesel::insert_into(courier)
+                .values(&new_courier)
+                .execute(&mut conn)
+                .expect("Could not add new courier");
+        }
     }
-    else {
-        return Err(String::from("Email already in use"))
-    }
+
+    let form = RetrieveUserResponse{
+        first_name: new_user.first_name,
+        phone_number: new_user.phone_number,
+        email: new_user.email,
+        role: new_user.role,
+    };
+    return Ok(form)
 }
 
 pub async fn login_user(mut conn: PooledConnection<ConnectionManager<PgConnection>>, auth_data: AuthData) -> Result<UserLoggedIn, AuthError> {
@@ -62,9 +81,9 @@ pub async fn login_user(mut conn: PooledConnection<ConnectionManager<PgConnectio
 
 
 pub async fn handle_login(existing_user: User, user_to_login: AuthData) -> Result<UserLoggedIn, AuthError> {
-    let password_hash = CryptoService::hash_password_with_salt((&user_to_login.password).parse().unwrap()).await;
-    CryptoService::verify_password_with_salt(&*existing_user.password, &password_hash).await.expect("Password couldn't be verified");
-
+    // let password_hash = CryptoService::hash_password_with_salt((&user_to_login.password).parse().unwrap()).await;
+    let valid = verify(user_to_login.password, existing_user.password.as_str());
+    assert_eq!(valid.unwrap(), true);
     let fifteen_min_from_now = Utc::now() + Duration::minutes(15);
     let timestamp_for_access = usize::try_from(fifteen_min_from_now.timestamp()).unwrap();
     let access_token_claims = Claims {

@@ -1,11 +1,12 @@
- use actix_web::{web, Scope};
+ use actix_web::web;
  use crate::handlers::handlers_user::*;
 
- pub fn user_routes() -> Scope {
-     web::scope("users")
-         .route("/", web::get().to(get_all_users))
-         .route("/{uuid}", web::get().to(get_user))
-         .route("/{uuid}", web::put().to(update_user))
-         .route("/{uuid}/update-password", web::put().to(update_password))
-         .route("/{uuid}", web::delete().to(delete_user))
+ pub fn config_users(conf: &mut web::ServiceConfig) {
+     let scope = web::scope("/api/v1/users")
+         .service(get_all_users)
+         .service(get_user)
+         .service(update_user)
+         .service(update_password)
+         .service(delete_user);
+     conf.service(scope);
  }
