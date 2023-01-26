@@ -22,12 +22,11 @@ pub async fn get_user(pool: web::Data<PostgresPool>, user_id: web::Path<Uuid>) -
                 first_name: user.first_name.to_string(),
                 phone_number: user.phone_number.to_string(),
                 email: user.email.to_string(),
-                role: user.role.to_string(),
+                role: user.role,
             };
             Ok(HttpResponse::Ok().json(serde_json::to_string(&user_info).unwrap()))
         },
-        Err(_err) => {
-            Err(ServiceError::UserNotFound) },
+        Err(_err) => Err(ServiceError::UserNotFound),
     }
 }
 
@@ -41,8 +40,7 @@ pub async fn get_all_users(pool: web::Data<PostgresPool>) -> impl Responder {
 
     match result {
         Ok(result) => Ok(HttpResponse::Ok().json(result.unwrap())),
-        Err(_err) => {
-            Err(ServiceError::InternalServerError) },
+        Err(_err) => Err(ServiceError::InternalServerError),
     }
 }
 
@@ -60,12 +58,11 @@ pub async fn update_user(pool: web::Data<PostgresPool>, user_profile: web::Json<
                 first_name: user_updated.first_name.to_string(),
                 phone_number: user_updated.phone_number.to_string(),
                 email: user_updated.email.to_string(),
-                role: user_updated.role.to_string(),
+                role: user_updated.role,
             };
             Ok(HttpResponse::Ok().json(serde_json::to_string(&user_info).unwrap()))
         },
-        Err(_err) => {
-            Err(ServiceError::BadRequest("User couldn't be updated".parse().unwrap())) },
+        Err(_err) => Err(ServiceError::BadRequest("User couldn't be updated".parse().unwrap())),
     }
 }
 
@@ -79,8 +76,7 @@ pub async fn update_password(pool: web::Data<PostgresPool>, id_user: web::Path<U
 
     match result.await {
         Ok(_result) => Ok(HttpResponse::Ok().body("User's password has been updated")),
-        Err(_err) => {
-            Err(ServiceError::BadRequest("User couldn't be updated".parse().unwrap())) },
+        Err(_err) => Err(ServiceError::BadRequest("User couldn't be updated".parse().unwrap())),
     }
 }
 
@@ -96,7 +92,6 @@ pub async fn delete_user(pool: web::Data<PostgresPool>, user_id: web::Path<Uuid>
 
     match result {
         Ok(_result) => Ok(HttpResponse::Accepted().body("User has been deleted")),
-        Err(_err) => {
-            Err(ServiceError::UserNotFound) },
+        Err(_err) => Err(ServiceError::UserNotFound),
     }
 }

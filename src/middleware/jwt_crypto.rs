@@ -4,11 +4,6 @@ use eyre::eyre;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use dotenv::dotenv;
-use ring::digest;
-use ring::error::Unspecified;
-use pbkdf2::*;
-
-extern crate base64;
 
 
 #[derive(Debug, Clone)]
@@ -18,11 +13,6 @@ pub struct CryptoService;
 pub struct Claims {
     pub sub: i32,
     pub exp: i64,
-}
-
-#[derive(Serialize)]
-pub struct Auth {
-    pub token: String,
 }
 
 
@@ -48,10 +38,7 @@ impl CryptoService {
         .await
         .map_err(|err| eyre!("Verifying jwt token: {}", err));
 
-        match decoded_token {
-            Ok(_) => true,
-            Err(_) => false
-        }
+        decoded_token.is_ok()
     }
 }
 

@@ -50,7 +50,6 @@ pub async fn login(pool: web::Data<PostgresPool>, auth_data: web::Json<AuthData>
         },
 
         Err(_err) => {
-            // log::error!("{:?}", err);
             HttpResponse::Ok().json(UserLoginError {
                 message: String::from("Could not log user in"),
                 error: AuthError::Unauthorized.to_string(),

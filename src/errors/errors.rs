@@ -6,7 +6,7 @@ pub enum ServiceError {
     #[display(fmt = "Internal Server Error")]
     InternalServerError,
 
-    #[display(fmt = "BadRequest: {}", _0)]
+    #[display(fmt = "BadRequest: {_0}")]
     BadRequest(String),
 
     #[display(fmt = "User not found")]
@@ -30,8 +30,6 @@ impl ResponseError for ServiceError {
 
 #[derive(Debug, Display)]
 pub enum AuthError {
-    #[display(fmt = "Error during verifying password")]
-    VerifyError,
     #[display(fmt = "User doesn't authorised")]
     Unauthorized
 }
@@ -39,9 +37,6 @@ pub enum AuthError {
 impl ResponseError for AuthError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            AuthError::VerifyError => {
-                HttpResponse::ExpectationFailed().json("Error during verifying password.")
-            },
             AuthError::Unauthorized => {
                 HttpResponse::Unauthorized().json("User doesn't authorised.")
             }

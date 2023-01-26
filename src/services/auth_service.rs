@@ -26,12 +26,12 @@ pub async fn signup(mut conn: PooledConnection<ConnectionManager<PgConnection>>,
 
     println!("{}", user.email);
     let new_user = User {
-        first_name: (&user.first_name).to_string(),
+        first_name: (user.first_name).to_string(),
         address: String::default(),
-        phone_number: (&user.phone_number).to_string(),
-        email: (&user.email).to_string(),
+        phone_number: (user.phone_number).to_string(),
+        email: (user.email).to_string(),
         password: password_hash.unwrap(),
-        role: (&user.role).to_string(),
+        role: (user.role).to_string(),
         is_blocked: false,
         is_deleted: false,
         created_at: Default::default(),
@@ -81,9 +81,9 @@ pub async fn login_user(mut conn: PooledConnection<ConnectionManager<PgConnectio
 
 
 pub async fn handle_login(existing_user: User, user_to_login: AuthData) -> Result<UserLoggedIn, AuthError> {
-    // let password_hash = CryptoService::hash_password_with_salt((&user_to_login.password).parse().unwrap()).await;
     let valid = verify(user_to_login.password, existing_user.password.as_str());
     assert_eq!(valid.unwrap(), true);
+
     let fifteen_min_from_now = Utc::now() + Duration::minutes(15);
     let timestamp_for_access = usize::try_from(fifteen_min_from_now.timestamp()).unwrap();
     let access_token_claims = Claims {

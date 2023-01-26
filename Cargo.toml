@@ -9,28 +9,15 @@ derive_more = "0.99.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 diesel = { version = "2.0.0", features = ["postgres", "r2d2", "chrono", "uuid"] }
-postgres = "0.19.4"
 eyre = "0.6.8"
-color-eyre = "0.6.2"
 r2d2 = "0.8.8"
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
 jsonwebtoken = "8.2.0"
-reqwest = { version = "0.11.13", features = ["blocking", "json"] }
 log = "0.4.17"
 actix-rt = "2.6.0"
 dotenv = "0.15.0"
-password-hash = { version = "0.4", features = ["alloc", "rand_core"] }
-rand_core = { version = "0.6" }
-scrypt = "0.10.0"
 actix-web = "4.2.1"
-rand = "0.8.5"
-ring = "0.16.20"
-json = "0.12.4"
-actix-swagger = "0.3.1"
-actix-web-opentelemetry = "0.13.0"
 cargo-watch = "8.3.0"
 actix-cors = "0.6.4"
 env_logger = "0.10.0"
-base64 = "0.12.3"
-pbkdf2 = "0.11.0"
 bcrypt = "0.13.0"

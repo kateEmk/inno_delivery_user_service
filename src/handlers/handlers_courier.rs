@@ -7,6 +7,7 @@ use crate::resources::db::{PostgresPool};
 use crate::errors::errors::*;
 use crate::services::courier_service::*;
 
+
 #[get("/")]
 pub async fn get_all_couriers(pool: web::Data<PostgresPool>) -> impl Responder {
     let conn = pool.get().unwrap();
