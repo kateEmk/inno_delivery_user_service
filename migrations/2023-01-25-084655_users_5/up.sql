@@ -1,0 +1,2 @@
+ALTER TABLE users ALTER COLUMN address DROP NOT NULL;
+-- ALTER TABLE users ADD COLUMN address TEXT;

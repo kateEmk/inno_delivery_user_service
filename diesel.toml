@@ -1,5 +1,6 @@
 [print_schema]
-file = "src/schemas/schema.rs"
+file = "src/schema/schema.rs"
+filter = { only_tables = ["users", "courier"] }
 
 [migrations_directory]
 dir = "migrations"

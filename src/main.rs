@@ -1,36 +1,56 @@
 mod handlers;
-mod api;
+mod routes;
 mod models;
 mod resources;
-mod schemas;
+mod schema;
 mod services;
 mod errors;
-mod auth;
-pub mod config;
+mod middleware;
+mod constants;
 
 extern crate diesel;
-use std::env;
-use actix_web::middleware::Logger;
-use actix_web::{web, App, HttpServer};
+extern crate serde;
+extern crate serde_json;
+
+use std::{io::Error, env};
+use actix_cors::Cors;
+use actix_web::{App, HttpServer, http::header, middleware::Logger};
 use dotenv::dotenv;
-use crate::api::urls::register_urls;
-use crate::resources::db;
+use crate::resources::db::establish_connection;
+use crate::routes::courier_routes::config_courier;
+use crate::routes::user_routes::config_users;
+use crate::routes::auth_routes::config_auth;
 
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[actix_rt::main]
+async fn main() -> Result<(), Error> {
     dotenv().ok();
-    env::set_var("RUST_LOG", "actix_web=debug");
-    let pool = db::get_pool();
+    if env::var_os("RUST_LOG").is_none() {
+        env::set_var("RUST_LOG", "actix_web=debug");
+    }
+    env_logger::init();
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:3000")
+            .allowed_origin("http://localhost:3000/")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::AUTHORIZATION,
+                header::ACCEPT,
+            ])
+            .supports_credentials();
         App::new()
+            .app_data(actix_web::web::Data::new(establish_connection()))
+            .wrap(middleware::auth_middleware::Authentication)
+            .configure(config_auth)
+            .configure(config_users)
+            .configure(config_courier)
+            .wrap(cors)
             .wrap(Logger::default())
-            .app_data(
-                web::Data::new(pool.clone()))
-            .route("", web::get().to(register_urls()))
     })
-    .bind("127.0.0.1:8080")?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }

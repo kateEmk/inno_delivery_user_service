@@ -1,16 +1,16 @@
-use diesel::pg::PgConnection;
+use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenv::dotenv;
 use std::env;
 
-
 pub type PostgresPool = Pool<ConnectionManager<PgConnection>>;
 
-pub fn get_pool() -> PostgresPool {
+pub fn establish_connection() -> PostgresPool {
    dotenv().ok();
-   let url = env::var("DATABASE_URL").expect("no DB URL");
-   let connection = ConnectionManager::<PgConnection>::new(url);
+   let database_url = env::var("DATABASE_URL").expect("no DB URL");
+
+   let connection = ConnectionManager::<PgConnection>::new(database_url);
    Pool::builder()
        .build(connection)
-       .expect("could not build connection pool")
+       .expect("could not build connection Pool")
 }
