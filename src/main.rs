@@ -6,6 +6,7 @@ mod schema;
 mod services;
 mod errors;
 mod middleware;
+mod constants;
 
 extern crate diesel;
 extern crate serde;
@@ -42,6 +43,7 @@ async fn main() -> Result<(), Error> {
             .supports_credentials();
         App::new()
             .app_data(actix_web::web::Data::new(establish_connection()))
+            .wrap(middleware::auth_middleware::Authentication)
             .configure(config_auth)
             .configure(config_users)
             .configure(config_courier)

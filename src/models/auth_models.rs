@@ -19,3 +19,9 @@ pub struct UserLoggedIn {
     pub jwt: String,
     pub refresh_token: String
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResponseBody<T> {
+    pub message: String,
+    pub data: T,
+}
