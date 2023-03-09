@@ -1,6 +1,4 @@
-# INNO-DELIVERY SERVICE (pt.1): 
-- implementation for users/couriers;
-- authorisation and authentication (using jwt).
+# INNO-DELIVERY SERVICE (pt.1):
 
 ### Run with Swagger:
 `docker run -p 80:8080 swaggerapi/swagger-editor`
